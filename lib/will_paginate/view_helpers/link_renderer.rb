@@ -40,39 +40,39 @@ module WillPaginate
       
     protected
     
-      def page_number(page)
+    def page_number(page)
         if page == current_page
-          tag(:em, page, :class => 'current')
+          tag(:li, link(page, page, :rel => rel_value(page), :class => 'pagination__inner  pagination__inner--current'), :class => 'pagination__item')
         else
-          link(page, page, :rel => rel_value(page))
+          tag(:li, link(page, page, :rel => rel_value(page), :class => 'pagination__inner  pagination__inner--link'), :class => 'pagination__item')
         end
       end
-      
+
       def gap
         text = @template.will_paginate_translate(:page_gap) { '&hellip;' }
-        %(<span class="gap">#{text}</span>)
+        %(<li class="pagination__gap">#{text}</li>)
       end
-      
+
       def previous_page
         num = @collection.current_page > 1 && @collection.current_page - 1
-        previous_or_next_page(num, @options[:previous_label], 'previous_page')
+        previous_or_next_page(num, @options[:previous_label], 'pagination__inner pagination__inner--previous')
       end
-      
+
       def next_page
         num = @collection.current_page < total_pages && @collection.current_page + 1
-        previous_or_next_page(num, @options[:next_label], 'next_page')
+        previous_or_next_page(num, @options[:next_label], 'pagination__inner pagination__inner--next')
       end
-      
+
       def previous_or_next_page(page, text, classname)
         if page
-          link(text, page, :class => classname)
+          tag(:li, link(text, page, :class => classname + ''), :class => 'pagination__item  pagination__item--special')
         else
-          tag(:span, text, :class => classname + ' disabled')
+          tag(:li, tag(:span, text, :class => classname + '  pagination__inner--disabled'), :class => 'pagination__item  pagination__item--special')
         end
       end
-      
+
       def html_container(html)
-        tag(:div, html, container_attributes)
+        tag(:ul, html, container_attributes)
       end
       
       # Returns URL params for +page_link_or_span+, taking the current GET params
