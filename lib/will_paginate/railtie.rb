@@ -1,4 +1,3 @@
-require 'will_paginate'
 require 'will_paginate/page_number'
 require 'will_paginate/collection'
 require 'will_paginate/i18n'
@@ -39,7 +38,7 @@ module WillPaginate
       end
       def status_code_with_paginate(exception = @exception)
         actual_exception = if exception.respond_to?(:cause)
-          exception.cause
+          exception.cause || exception
         elsif exception.respond_to?(:original_exception)
           exception.original_exception
         else
@@ -60,11 +59,11 @@ module WillPaginate
     end
 
     module ControllerRescuePatch
-      def rescue_from(*args, &block)
+      def rescue_from(*args, **kwargs, &block)
         if idx = args.index(WillPaginate::InvalidPage)
           args[idx] = args[idx].name
         end
-        super(*args, &block)
+        super(*args, **kwargs, &block)
       end
     end
   end

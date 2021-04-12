@@ -105,9 +105,7 @@ module WillPaginate
       # overloaded to be pagination-aware
       def empty?
         if !loaded? and offset_value
-          result = count
-          result = result.size if result.respond_to?(:size) and !result.is_a?(Integer)
-          result <= offset_value
+          total_entries <= offset_value
         else
           super
         end
@@ -212,6 +210,8 @@ module WillPaginate
                 WHERE rownum <= #{pager.offset + pager.per_page}
               ) WHERE rnum >= #{pager.offset}
             SQL
+          elsif (self.connection.adapter_name =~ /^sqlserver/i)
+            query << " OFFSET #{pager.offset} ROWS FETCH NEXT #{pager.per_page} ROWS ONLY"
           else
             query << " LIMIT #{pager.per_page} OFFSET #{pager.offset}"
           end
