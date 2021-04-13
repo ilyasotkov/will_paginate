@@ -1,26 +1,25 @@
 require 'spec_helper'
 
-begin
+if !ENV['SKIP_NONRAILS_TESTS']
   require 'will_paginate/sequel'
   require File.expand_path('../sequel_test_connector', __FILE__)
-rescue LoadError, ArgumentError => error
-  warn "Error running Sequel specs: #{error.message}"
-  sequel_loaded = false
-else
   sequel_loaded = true
+else
+  sequel_loaded = false
 end
 
 describe Sequel::Dataset::Pagination, 'extension' do
   
   class Car < Sequel::Model
+    self.dataset = dataset.extension(:pagination)
   end
 
   it "should have the #paginate method" do
-    Car.should respond_to(:paginate)
+    Car.dataset.should respond_to(:paginate)
   end
 
   it "should NOT have the #paginate_by_sql method" do
-    Car.should_not respond_to(:paginate_by_sql)
+    Car.dataset.should_not respond_to(:paginate_by_sql)
   end
 
   describe 'pagination' do
@@ -31,7 +30,7 @@ describe Sequel::Dataset::Pagination, 'extension' do
     end
 
     it "should imitate WillPaginate::Collection" do
-      result = Car.paginate(1, 2)
+      result = Car.dataset.paginate(1, 2)
       
       result.should_not be_empty
       result.size.should == 2
@@ -43,16 +42,16 @@ describe Sequel::Dataset::Pagination, 'extension' do
     end
     
     it "should perform" do
-      Car.paginate(1, 2).all.should == [Car[1], Car[2]]
+      Car.dataset.paginate(1, 2).all.should == [Car[1], Car[2]]
     end
 
     it "should be empty" do
-      result = Car.paginate(3, 2)
+      result = Car.dataset.paginate(3, 2)
       result.should be_empty
     end
     
     it "should perform with #select and #order" do
-      result = Car.select("name as foo".lit).order(:name).paginate(1, 2).all
+      result = Car.select(Sequel.lit("name as foo")).order(:name).paginate(1, 2).all
       result.size.should == 2
       result.first.values[:foo].should == "Aston Martin"
     end

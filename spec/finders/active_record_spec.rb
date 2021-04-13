@@ -3,7 +3,6 @@ require 'will_paginate/active_record'
 require File.expand_path('../activerecord_test_connector', __FILE__)
 
 ActiverecordTestConnector.setup
-abort unless ActiverecordTestConnector.able_to_connect
 
 describe WillPaginate::ActiveRecord do
   
@@ -164,6 +163,13 @@ describe WillPaginate::ActiveRecord do
       topics.total_entries.should == 999
     end
 
+    it "overrides empty? count call with a total_entries fixed value" do
+      lambda {
+        topics = Topic.paginate :page => 1, :per_page => 3, :total_entries => 999
+        topics.should_not be_empty
+      }.should run_queries(0)
+    end
+
     it "removes :include for count" do
       lambda {
         developers = Developer.paginate(:page => 1, :per_page => 1).includes(:projects)
@@ -214,7 +220,7 @@ describe WillPaginate::ActiveRecord do
         sql = "select content from topics where content like '%futurama%'"
         topics = Topic.paginate_by_sql sql, :page => 1, :per_page => 1
         topics.total_entries.should == 1
-        topics.first.attributes.has_key?('title').should be_false
+        topics.first.attributes.has_key?('title').should be(false)
       }.should run_queries(2)
     end
 
@@ -272,12 +278,12 @@ describe WillPaginate::ActiveRecord do
     }.should run_queries(1)
   end
   
-  it "should get second (inexistent) page of Topics, requiring 2 queries" do
+  it "should get second (inexistent) page of Topics, requiring 1 query" do
     lambda {
       result = Topic.paginate :page => 2
       result.total_pages.should == 1
       result.should be_empty
-    }.should run_queries(2)
+    }.should run_queries(1)
   end
   
   describe "associations" do

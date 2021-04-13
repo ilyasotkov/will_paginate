@@ -24,7 +24,7 @@ module WillPaginate
       # method as you see fit.
       def to_html
         html = pagination.map do |item|
-          item.is_a?(Fixnum) ?
+          item.is_a?(Integer) ?
             page_number(item) :
             send(item)
         end.join(@options[:link_separator])
@@ -35,16 +35,26 @@ module WillPaginate
       # Returns the subset of +options+ this instance was initialized with that
       # represent HTML attributes for the container element of pagination links.
       def container_attributes
-        @container_attributes ||= @options.except(*(ViewHelpers.pagination_options.keys + [:renderer] - [:class]))
+        @container_attributes ||= {
+          :role => 'navigation',
+          :"aria-label" => @template.will_paginate_translate(:container_aria_label) { 'Pagination' }
+        }.update @options.except(*(ViewHelpers.pagination_options.keys + [:renderer] - [:class]))
       end
       
     protected
     
     def page_number(page)
+        aria_label = @template.will_paginate_translate(:page_aria_label, :page => page.to_i) { "Page #{page}" }
         if page == current_page
-          tag(:li, link(page, page, :rel => rel_value(page), :class => 'pagination__inner  pagination__inner--current'), :class => 'pagination__item')
+          tag(:li,
+            link(page, page, :rel => rel_value(page), :class => 'pagination__inner pagination__inner--current', :"aria-label" => aria_label, :"aria-current" => 'page'),
+            :class => 'pagination__item'
+          )
         else
-          tag(:li, link(page, page, :rel => rel_value(page), :class => 'pagination__inner  pagination__inner--link'), :class => 'pagination__item')
+          tag(:li,
+            link(page, page, :rel => rel_value(page), :class => 'pagination__inner pagination__inner--link', :"aria-label" => aria_label),
+            :class => 'pagination__item'
+          )
         end
       end
 
@@ -88,7 +98,7 @@ module WillPaginate
       end
 
       def link(text, target, attributes = {})
-        if target.is_a? Fixnum
+        if target.is_a?(Integer)
           attributes[:rel] = rel_value(target)
           target = url(target)
         end
